@@ -10,7 +10,7 @@ import Combine
 
 class WeatherService {
     private let baseURL = "https://api.openweathermap.org/data/2.5/weather"
-    private let apiKey = ""
+    private let apiKey = "fb63a7f74882a3dbb98e2fbd6204763a"
     
     func fetchWeather(for city: String) -> AnyPublisher<WeatherData, Error> {
         guard let url = URL(string: "\(baseURL)?q=\(city)&appid=\(apiKey)&units=metric") else {
