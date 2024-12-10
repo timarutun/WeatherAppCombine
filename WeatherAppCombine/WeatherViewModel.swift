@@ -9,34 +9,42 @@ import Foundation
 import Combine
 
 class WeatherViewModel: ObservableObject {
-    @Published var city: String = "London"
-    @Published var weatherDescription: String = ""
-    @Published var temperature: String = ""
-    @Published var cityName: String = ""
-    @Published var icon: String = ""
-    @Published var humidity: String = ""
-    @Published var windSpeed: String = ""
-    @Published var pressure: String = ""
+    @Published var forecast: [ForecastDay] = []
     
     private let weatherService = WeatherService()
     private var cancellables = Set<AnyCancellable>()
     
-    func fetchWeather() {
-        weatherService.fetchWeather(for: city)
+    func fetchForecast(latitude: Double, longitude: Double) {
+        weatherService.fetchForecast(latitude: latitude, longitude: longitude)
             .sink(receiveCompletion: { completion in
                 if case .failure(let error) = completion {
-                    print("Error fetching weather: \(error)")
+                    print("Error fetching forecast: \(error)")
                 }
-            }, receiveValue: { [weak self] (data: WeatherData) in
-                self?.cityName = data.name
-                self?.weatherDescription = data.weather.first?.description ?? "N/A"
-                self?.temperature = "\(Int(data.main.temp))°C"
-                self?.icon = data.weather.first?.icon ?? "01d"
-                self?.humidity = "\(data.main.humidity)%"
-                self?.windSpeed = "\(data.wind.speed) m/s"
-                self?.pressure = "\(data.main.pressure) hPa"
+            }, receiveValue: { [weak self] data in
+                self?.forecast = data.daily.map { daily in
+                    let date = Date(timeIntervalSince1970: TimeInterval(daily.dt))
+                    let formatter = DateFormatter()
+                    formatter.dateFormat = "EEE, MMM d"
+                    let day = formatter.string(from: date)
+                    
+                    return ForecastDay(
+                        day: day,
+                        temperature: "\(Int(daily.temp.day))°C",
+                        description: daily.weather.first?.description ?? "N/A",
+                        icon: daily.weather.first?.icon ?? "01d"
+                    )
+                }
             })
             .store(in: &cancellables)
     }
 }
+
+struct ForecastDay: Identifiable {
+    let id = UUID()
+    let day: String
+    let temperature: String
+    let description: String
+    let icon: String
+}
+
 
