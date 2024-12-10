@@ -11,69 +11,101 @@ struct ContentView: View {
     @StateObject private var viewModel = WeatherViewModel()
     
     var body: some View {
-        VStack {
-            TextField("Enter city", text: $viewModel.city, onCommit: {
-                viewModel.fetchWeather()
-            })
-            .textFieldStyle(RoundedBorderTextFieldStyle())
-            .padding()
+        ZStack {
             
-            Spacer()
+            LinearGradient(
+                gradient: Gradient(colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            if !viewModel.cityName.isEmpty {
-                VStack(spacing: 16) {
-                    Text(viewModel.cityName)
-                        .font(.largeTitle)
-                        .bold()
-                    
-                    Text(viewModel.temperature)
-                        .font(.system(size: 64))
-                        .bold()
-                    
-                    Text(viewModel.weatherDescription.capitalized)
-                        .font(.title)
-                    
-                    if let iconURL = URL(string: "https://openweathermap.org/img/wn/\(viewModel.icon)@2x.png") {
-                        AsyncImage(url: iconURL) { image in
-                            image
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 100, height: 100)
-                        } placeholder: {
-                            ProgressView()
+            VStack(spacing: 20) {
+                
+                if let today = viewModel.forecast.first {
+                    VStack(spacing: 10) {
+                        Text("Today")
+                            .font(.largeTitle)
+                            .bold()
+                            .foregroundColor(.white)
+                        
+                        if let iconURL = URL(string: "https://openweathermap.org/img/wn/\(today.icon)@2x.png") {
+                            AsyncImage(url: iconURL) { image in
+                                image
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 100, height: 100)
+                            } placeholder: {
+                                ProgressView()
+                            }
                         }
+                        
+                        Text(today.temperature)
+                            .font(.system(size: 60, weight: .bold))
+                            .foregroundColor(.white)
+                        
+                        Text(today.description.capitalized)
+                            .font(.title2)
+                            .foregroundColor(.white.opacity(0.8))
                     }
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Humidity:")
-                                .bold()
-                            Text(viewModel.humidity)
-                        }
-                        HStack {
-                            Text("Wind Speed:")
-                                .bold()
-                            Text(viewModel.windSpeed)
-                        }
-                        HStack {
-                            Text("Pressure:")
-                                .bold()
-                            Text(viewModel.pressure)
-                        }
-                    }
-                    .font(.body)
+                    .padding()
+                    .background(Color.white.opacity(0.2))
+                    .cornerRadius(20)
+                } else {
+                    ProgressView("Loading...")
+                        .foregroundColor(.white)
                 }
-                .padding()
-            } else {
-                Text("Enter a city to get the weather.")
-                    .foregroundColor(.gray)
+                
+                
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("5-Day Forecast")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.leading)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 16) {
+                            ForEach(viewModel.forecast.dropFirst()) { day in
+                                VStack(spacing: 10) {
+                                    Text(day.day)
+                                        .font(.subheadline)
+                                        .foregroundColor(.white)
+                                        .bold()
+                                    
+                                    if let iconURL = URL(string: "https://openweathermap.org/img/wn/\(day.icon)@2x.png") {
+                                        AsyncImage(url: iconURL) { image in
+                                            image
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(width: 50, height: 50)
+                                        } placeholder: {
+                                            ProgressView()
+                                        }
+                                    }
+                                    
+                                    Text(day.temperature)
+                                        .font(.title2)
+                                        .bold()
+                                        .foregroundColor(.white)
+                                    
+                                    Text(day.description.capitalized)
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.8))
+                                }
+                                .padding()
+                                .background(Color.white.opacity(0.2))
+                                .cornerRadius(15)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                }
             }
-            
-            Spacer()
+            .padding(.top)
         }
-        .padding()
         .onAppear {
-            viewModel.fetchWeather()
+            
+            viewModel.fetchForecast(latitude: 51.5074, longitude: -0.1278)
         }
     }
 }
