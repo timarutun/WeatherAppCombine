@@ -7,12 +7,13 @@
 
 import SwiftUI
 
+/// The main view displaying the current weather, additional details, and a 5-day forecast.
 struct ContentView: View {
     @StateObject private var viewModel = WeatherViewModel()
     
     var body: some View {
         ZStack {
-            
+            // Gradient background for a modern look
             LinearGradient(
                 gradient: Gradient(colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)]),
                 startPoint: .topLeading,
@@ -21,7 +22,19 @@ struct ContentView: View {
             .ignoresSafeArea()
             
             VStack(spacing: 20) {
+                // Location and update time
+                VStack {
+                    Text("New York, USA")
+                        .font(.title)
+                        .bold()
+                        .foregroundColor(.white)
+                    
+                    Text("Updated: \(Date().formatted())")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.8))
+                }
                 
+                // Today's weather forecast
                 if let today = viewModel.forecast.first {
                     VStack(spacing: 10) {
                         Text("Today")
@@ -29,6 +42,7 @@ struct ContentView: View {
                             .bold()
                             .foregroundColor(.white)
                         
+                        // Weather icon for today's forecast
                         if let iconURL = URL(string: "https://openweathermap.org/img/wn/\(today.icon)@2x.png") {
                             AsyncImage(url: iconURL) { image in
                                 image
@@ -40,6 +54,7 @@ struct ContentView: View {
                             }
                         }
                         
+                        // Temperature and weather description
                         Text(today.temperature)
                             .font(.system(size: 60, weight: .bold))
                             .foregroundColor(.white)
@@ -52,17 +67,32 @@ struct ContentView: View {
                     .background(Color.white.opacity(0.2))
                     .cornerRadius(20)
                 } else {
+                    // Loading indicator for forecast data
                     ProgressView("Loading...")
                         .foregroundColor(.white)
                 }
                 
+                // Additional weather details (humidity, wind, pressure)
+                HStack(spacing: 30) {
+                    WeatherDetailView(icon: "humidity.fill", value: "60%", label: "Humidity")
+                    WeatherDetailView(icon: "wind", value: "5 m/s", label: "Wind")
+                    WeatherDetailView(icon: "barometer", value: "1013 hPa", label: "Pressure")
+                }
+                .padding(.horizontal)
                 
+                // Section divider
+                Divider()
+                    .background(Color.white.opacity(0.5))
+                    .padding(.horizontal)
+                
+                // 5-day weather forecast
                 VStack(alignment: .leading, spacing: 10) {
                     Text("5-Day Forecast")
                         .font(.headline)
                         .foregroundColor(.white)
                         .padding(.leading)
                     
+                    // Horizontal scrollable list of 5-day forecast
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 16) {
                             ForEach(viewModel.forecast.dropFirst()) { day in
@@ -72,6 +102,7 @@ struct ContentView: View {
                                         .foregroundColor(.white)
                                         .bold()
                                     
+                                    // Weather icon for each day
                                     if let iconURL = URL(string: "https://openweathermap.org/img/wn/\(day.icon)@2x.png") {
                                         AsyncImage(url: iconURL) { image in
                                             image
@@ -83,6 +114,7 @@ struct ContentView: View {
                                         }
                                     }
                                     
+                                    // Temperature and description for each day
                                     Text(day.temperature)
                                         .font(.title2)
                                         .bold()
@@ -95,6 +127,7 @@ struct ContentView: View {
                                 .padding()
                                 .background(Color.white.opacity(0.2))
                                 .cornerRadius(15)
+                                .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 5)
                             }
                         }
                         .padding(.horizontal)
@@ -104,9 +137,37 @@ struct ContentView: View {
             .padding(.top)
         }
         .onAppear {
-            
-            viewModel.fetchForecast(latitude: 51.5074, longitude: -0.1278)
+            // Fetch the weather forecast for New York City (example location)
+            viewModel.fetchForecast(latitude: 40.7128, longitude: -74.0060)
         }
+    }
+}
+
+/// A reusable view for displaying weather details such as humidity, wind speed, or pressure.
+struct WeatherDetailView: View {
+    let icon: String
+    let value: String
+    let label: String
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            // Icon representing the weather detail
+            Image(systemName: icon)
+                .font(.largeTitle)
+                .foregroundColor(.white)
+            
+            // Value of the weather detail (e.g., "60%")
+            Text(value)
+                .font(.title2)
+                .foregroundColor(.white)
+                .bold()
+            
+            // Label for the weather detail (e.g., "Humidity")
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.8))
+        }
+        .frame(width: 80)
     }
 }
 
