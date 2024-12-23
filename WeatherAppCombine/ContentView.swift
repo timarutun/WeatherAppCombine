@@ -13,13 +13,9 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            // Gradient background for a modern look
-            LinearGradient(
-                gradient: Gradient(colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // Dynamic gradient background
+            dynamicBackground
+                .ignoresSafeArea()
             
             VStack(spacing: 20) {
                 // Location and update time
@@ -64,7 +60,7 @@ struct ContentView: View {
                             .foregroundColor(.white.opacity(0.8))
                     }
                     .padding()
-                    .background(Color.white.opacity(0.2))
+                    .background(Color.black.opacity(0.3))
                     .cornerRadius(20)
                 } else {
                     // Loading indicator for forecast data
@@ -125,7 +121,7 @@ struct ContentView: View {
                                         .foregroundColor(.white.opacity(0.8))
                                 }
                                 .padding()
-                                .background(Color.white.opacity(0.2))
+                                .background(Color.black.opacity(0.3))
                                 .cornerRadius(15)
                                 .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 5)
                             }
@@ -140,6 +136,30 @@ struct ContentView: View {
             // Fetch the weather forecast for New York City (example location)
             viewModel.fetchForecast(latitude: 40.7128, longitude: -74.0060)
         }
+    }
+    
+    /// Determines the background gradient based on time and weather conditions
+    private var dynamicBackground: LinearGradient {
+        let hour = Calendar.current.component(.hour, from: Date())
+        
+        // Daytime gradient: blue and light blue
+        let dayGradient = Gradient(colors: [
+            Color.blue.opacity(0.7),
+            Color.cyan.opacity(0.7)
+        ])
+        
+        // Nighttime gradient: dark blue and black
+        let nightGradient = Gradient(colors: [
+            Color.black.opacity(0.8),
+            Color.blue.opacity(0.7)
+        ])
+        
+        // Use daytime gradient for 6 AM - 6 PM, otherwise use nighttime gradient
+        return LinearGradient(
+            gradient: hour >= 6 && hour < 18 ? dayGradient : nightGradient,
+            startPoint: .top,
+            endPoint: .bottom
+        )
     }
 }
 
@@ -170,7 +190,6 @@ struct WeatherDetailView: View {
         .frame(width: 80)
     }
 }
-
 
 #Preview {
     ContentView()
