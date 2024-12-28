@@ -13,122 +13,31 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            // Dynamic gradient background
             dynamicBackground
                 .ignoresSafeArea()
             
             VStack(spacing: 20) {
-                // Location and update time
-                VStack {
-                    Text("New York, USA")
-                        .font(.title)
-                        .bold()
-                        .foregroundColor(.white)
-                    
-                    Text("Updated: \(Date().formatted())")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.8))
-                }
+                // Top section: Location and update time
+                LocationView()
                 
-                // Today's weather forecast
+                // Today's weather
                 if let today = viewModel.forecast.first {
-                    VStack(spacing: 10) {
-                        Text("Today")
-                            .font(.largeTitle)
-                            .bold()
-                            .foregroundColor(.white)
-                        
-                        // Weather icon for today's forecast
-                        if let iconURL = URL(string: "https://openweathermap.org/img/wn/\(today.icon)@2x.png") {
-                            AsyncImage(url: iconURL) { image in
-                                image
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 100, height: 100)
-                            } placeholder: {
-                                ProgressView()
-                            }
-                        }
-                        
-                        // Temperature and weather description
-                        Text(today.temperature)
-                            .font(.system(size: 60, weight: .bold))
-                            .foregroundColor(.white)
-                        
-                        Text(today.description.capitalized)
-                            .font(.title2)
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    .padding()
-                    .background(Color.black.opacity(0.3))
-                    .cornerRadius(20)
+                    TodayWeatherView(forecast: today)
                 } else {
-                    // Loading indicator for forecast data
                     ProgressView("Loading...")
                         .foregroundColor(.white)
                 }
                 
-                // Additional weather details (humidity, wind, pressure)
-                HStack(spacing: 30) {
-                    WeatherDetailView(icon: "humidity.fill", value: "60%", label: "Humidity")
-                    WeatherDetailView(icon: "wind", value: "5 m/s", label: "Wind")
-                    WeatherDetailView(icon: "barometer", value: "1013 hPa", label: "Pressure")
-                }
-                .padding(.horizontal)
+                // Additional weather details
+                WeatherDetailsView()
                 
-                // Section divider
+                // Divider
                 Divider()
                     .background(Color.white.opacity(0.5))
                     .padding(.horizontal)
                 
-                // 5-day weather forecast
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("5-Day Forecast")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding(.leading)
-                    
-                    // Horizontal scrollable list of 5-day forecast
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 16) {
-                            ForEach(viewModel.forecast.dropFirst()) { day in
-                                VStack(spacing: 10) {
-                                    Text(day.day)
-                                        .font(.subheadline)
-                                        .foregroundColor(.white)
-                                        .bold()
-                                    
-                                    // Weather icon for each day
-                                    if let iconURL = URL(string: "https://openweathermap.org/img/wn/\(day.icon)@2x.png") {
-                                        AsyncImage(url: iconURL) { image in
-                                            image
-                                                .resizable()
-                                                .scaledToFit()
-                                                .frame(width: 50, height: 50)
-                                        } placeholder: {
-                                            ProgressView()
-                                        }
-                                    }
-                                    
-                                    // Temperature and description for each day
-                                    Text(day.temperature)
-                                        .font(.title2)
-                                        .bold()
-                                        .foregroundColor(.white)
-                                    
-                                    Text(day.description.capitalized)
-                                        .font(.caption)
-                                        .foregroundColor(.white.opacity(0.8))
-                                }
-                                .padding()
-                                .background(Color.black.opacity(0.3))
-                                .cornerRadius(15)
-                                .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 5)
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-                }
+                // 5-Day Forecast
+                ForecastListView(forecast: viewModel.forecast)
             }
             .padding(.top)
         }
@@ -143,23 +52,80 @@ struct ContentView: View {
         let hour = Calendar.current.component(.hour, from: Date())
         
         // Daytime gradient: blue and light blue
-        let dayGradient = Gradient(colors: [
-            Color.blue.opacity(0.7),
-            Color.cyan.opacity(0.7)
-        ])
+        let dayGradient = Gradient(colors: [Color.blue.opacity(0.7), Color.cyan.opacity(0.7)])
         
         // Nighttime gradient: dark blue and black
-        let nightGradient = Gradient(colors: [
-            Color.black.opacity(0.8),
-            Color.blue.opacity(0.7)
-        ])
+        let nightGradient = Gradient(colors: [Color.black.opacity(0.8), Color.blue.opacity(0.7)])
         
-        // Use daytime gradient for 6 AM - 6 PM, otherwise use nighttime gradient
         return LinearGradient(
             gradient: hour >= 6 && hour < 18 ? dayGradient : nightGradient,
             startPoint: .top,
             endPoint: .bottom
         )
+    }
+}
+
+/// Displays the location and update time.
+struct LocationView: View {
+    var body: some View {
+        VStack {
+            Text("New York, USA")
+                .font(.title)
+                .bold()
+                .foregroundColor(.white)
+            
+            Text("Updated: \(Date().formatted())")
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.8))
+        }
+    }
+}
+
+/// Displays today's weather forecast.
+struct TodayWeatherView: View {
+    let forecast: ForecastDay
+    
+    var body: some View {
+        VStack(spacing: 10) {
+            Text("Today")
+                .font(.largeTitle)
+                .bold()
+                .foregroundColor(.white)
+            
+            if let iconURL = URL(string: "https://openweathermap.org/img/wn/\(forecast.icon)@2x.png") {
+                AsyncImage(url: iconURL) { image in
+                    image
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 100, height: 100)
+                } placeholder: {
+                    ProgressView()
+                }
+            }
+            
+            Text(forecast.temperature)
+                .font(.system(size: 60, weight: .bold))
+                .foregroundColor(.white)
+            
+            Text(forecast.description.capitalized)
+                .font(.title2)
+                .foregroundColor(.white.opacity(0.8))
+        }
+        .padding()
+        .background(Color.black.opacity(0.3))
+        .cornerRadius(20)
+    }
+}
+
+/// Displays weather details such as humidity, wind, and pressure.
+struct WeatherDetailsView: View {
+    var body: some View {
+        HStack(spacing: 30) {
+            WeatherDetailView(icon: "humidity.fill", value: "60%", label: "Humidity")
+            WeatherDetailView(icon: "wind", value: "5 m/s", label: "Wind")
+            WeatherDetailView(icon: "barometer", value: "1013 hPa", label: "Pressure")
+        }
+        .padding(.horizontal)
     }
 }
 
@@ -171,23 +137,81 @@ struct WeatherDetailView: View {
     
     var body: some View {
         VStack(spacing: 8) {
-            // Icon representing the weather detail
-            Image(systemName: icon)
+            Image(systemName: icon) // Weather detail icon
                 .font(.largeTitle)
                 .foregroundColor(.white)
             
-            // Value of the weather detail (e.g., "60%")
-            Text(value)
+            Text(value) // Value of the weather detail (e.g., "60%")
                 .font(.title2)
-                .foregroundColor(.white)
                 .bold()
+                .foregroundColor(.white)
             
-            // Label for the weather detail (e.g., "Humidity")
-            Text(label)
+            Text(label) // Label of the weather detail (e.g., "Humidity")
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.8))
         }
         .frame(width: 80)
+    }
+}
+
+/// Displays the 5-day forecast in a horizontal scrollable view.
+struct ForecastListView: View {
+    let forecast: [ForecastDay]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("5-Day Forecast")
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding(.leading)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 16) {
+                    ForEach(forecast.dropFirst()) { day in
+                        ForecastCardView(forecast: day)
+                    }
+                }
+                .padding(.horizontal)
+            }
+        }
+    }
+}
+
+/// Displays an individual day in the 5-day forecast.
+struct ForecastCardView: View {
+    let forecast: ForecastDay
+    
+    var body: some View {
+        VStack(spacing: 10) {
+            Text(forecast.day)
+                .font(.subheadline)
+                .foregroundColor(.white)
+                .bold()
+            
+            if let iconURL = URL(string: "https://openweathermap.org/img/wn/\(forecast.icon)@2x.png") {
+                AsyncImage(url: iconURL) { image in
+                    image
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 50, height: 50)
+                } placeholder: {
+                    ProgressView()
+                }
+            }
+            
+            Text(forecast.temperature)
+                .font(.title2)
+                .bold()
+                .foregroundColor(.white)
+            
+            Text(forecast.description.capitalized)
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.8))
+        }
+        .padding()
+        .background(Color.black.opacity(0.3))
+        .cornerRadius(15)
+        .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 5)
     }
 }
 
